@@ -1,17 +1,21 @@
 fun main() {
-    fun part1(input: List<String>): Int {
-        return input.size
+    fun getListOfCalories(input: List<String>): List<Int> = mutableListOf<Int>().apply {
+        var subSum = 0
+        input.forEach {
+            if (it.isBlank()) {
+                add(subSum)
+                subSum = 0
+            } else {
+                subSum += it.toInt()
+            }
+        }
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
+    fun part1(input: List<String>): Int = getListOfCalories(input).max()
 
-    // test if implementation meets criteria from the description, like:
-    val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
+    fun part2(input: List<String>): Int = getListOfCalories(input).sortedDescending().take(3).sum()
 
-    val input = readInput("Day01")
+    val input = readInput("Day01.txt")
     println(part1(input))
     println(part2(input))
 }
