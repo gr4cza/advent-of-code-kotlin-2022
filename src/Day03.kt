@@ -1,26 +1,24 @@
 fun main() {
-    fun score(it: List<String>): Int = when (val char = it[0][0]) {
-        in 'a'..'z' -> char - 'a' + 1
-        in 'A'..'Z' -> char - 'A' + 27
+    fun score(item: Char): Int = when (item) {
+        in 'a'..'z' -> item - 'a' + 1
+        in 'A'..'Z' -> item - 'A' + 27
         else -> error("")
     }
 
-    fun cleanUpInput(input: List<String>) = input.map { it.chunked(1) }
-
     fun part1(input: List<String>): Int {
-        return cleanUpInput(input)
-            .map { it.chunked(it.size / 2) }
+        return input
+            .map { it.chunked(input.size / 2) }
             .map {
-                it[0].intersect(it[1].toSet()).toList()
-            }.sumOf { score(it) }
+                it[0].toSet() intersect it[1].toSet()
+            }.sumOf { score(it.single()) }
     }
 
     fun part2(input: List<String>): Int {
-        return cleanUpInput(input)
+        return input
             .chunked(3)
             .map {
-                it[0].intersect(it[1].toSet()).intersect(it[2].toSet()).toList()
-            }.sumOf { score(it) }
+                it[0].toSet() intersect it[1].toSet() intersect it[2].toSet()
+            }.sumOf { score(it.single()) }
     }
 
     // test if implementation meets criteria from the description, like:

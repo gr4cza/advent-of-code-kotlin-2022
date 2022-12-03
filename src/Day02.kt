@@ -1,4 +1,7 @@
 @file:Suppress("MagicNumber")
+
+import Type.*
+
 enum class Type(val value: Int) {
     ROCK(1), PAPER(2), SCISSOR(3)
 }
@@ -6,19 +9,19 @@ enum class Type(val value: Int) {
 fun main() {
 
     fun translate(s: String): Type = when (s) {
-        "A", "X" -> Type.ROCK
-        "B", "Y" -> Type.PAPER
-        "C", "Z" -> Type.SCISSOR
+        "A", "X" -> ROCK
+        "B", "Y" -> PAPER
+        "C", "Z" -> SCISSOR
         else -> error("")
     }
 
     fun winedPrice(game: Pair<Type, Type>): Int = when (game) {
-        Pair(Type.ROCK, Type.PAPER) -> 6
-        Pair(Type.PAPER, Type.SCISSOR) -> 6
-        Pair(Type.SCISSOR, Type.ROCK) -> 6
-        Pair(Type.ROCK, Type.SCISSOR) -> 0
-        Pair(Type.PAPER, Type.ROCK) -> 0
-        Pair(Type.SCISSOR, Type.PAPER) -> 0
+        ROCK to PAPER -> 6
+        PAPER to SCISSOR -> 6
+        SCISSOR to ROCK -> 6
+        ROCK to SCISSOR -> 0
+        PAPER to ROCK -> 0
+        SCISSOR to PAPER -> 0
         else -> 3
     }
 
@@ -26,7 +29,7 @@ fun main() {
     fun calculateScore(it: Pair<Type, Type>) = it.second.value + winedPrice(it)
 
     fun cleanUpInput(input: List<String>) = input.map { it.split(" ") }
-        .map { Pair(translate(it[0]), translate(it[1])) }
+        .map { translate(it[0]) to translate(it[1]) }
 
     fun part1(input: List<String>): Int = cleanUpInput(input).sumOf {
         calculateScore(it)
@@ -34,27 +37,27 @@ fun main() {
 
     fun calculateGame(game: Pair<Type, Type>): Type =
         when (game.second) {
-            Type.ROCK -> {
+            ROCK -> {
                 when (game.first) {
-                    Type.ROCK -> Type.SCISSOR
-                    Type.PAPER -> Type.ROCK
-                    Type.SCISSOR -> Type.PAPER
+                    ROCK -> SCISSOR
+                    PAPER -> ROCK
+                    SCISSOR -> PAPER
                 }
             }
 
-            Type.PAPER -> game.first
-            Type.SCISSOR -> {
+            PAPER -> game.first
+            SCISSOR -> {
                 when (game.first) {
-                    Type.ROCK -> Type.PAPER
-                    Type.PAPER -> Type.SCISSOR
-                    Type.SCISSOR -> Type.ROCK
+                    ROCK -> PAPER
+                    PAPER -> SCISSOR
+                    SCISSOR -> ROCK
                 }
 
             }
         }
 
     fun part2(input: List<String>): Int = cleanUpInput(input).map {
-        Pair(it.first, calculateGame(it))
+        it.first to calculateGame(it)
     }.sumOf {
         calculateScore(it)
     }
