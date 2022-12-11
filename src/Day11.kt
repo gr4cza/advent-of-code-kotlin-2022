@@ -1,26 +1,29 @@
+@file:Suppress("MagicNumber")
+
 fun main() {
-    fun readOperation(line: String): (Long) -> Long {
-        val (a, op, b) = line.removePrefix("Operation: new = ").split(" ")
-        when (op) {
-            "*" -> {
-                if (b == "old") {
-                    return { it * it }
-                } else {
-                    return { it * b.toInt() }
+    fun readOperation(line: String): (Long) -> Long =
+        line.removePrefix("Operation: new = ")
+            .split(" ").let { (_, op, b) ->
+                when (op) {
+                    "*" -> {
+                        if (b == "old") {
+                            { it * it }
+                        } else {
+                            { it * b.toInt() }
+                        }
+                    }
+
+                    "+" -> {
+                        if (b == "old") {
+                            { it + it }
+                        } else {
+                            { it + b.toInt() }
+                        }
+                    }
+
+                    else -> error("unknown input: $op")
                 }
             }
-
-            "+" -> {
-                if (b == "old") {
-                    return { it + it }
-                } else {
-                    return { it + b.toInt() }
-                }
-            }
-
-            else -> error("unknown input: $op")
-        }
-    }
 
     fun parseInput(input: List<String>): List<Monkey> {
         val monkeys = mutableListOf<Monkey>()
@@ -53,7 +56,7 @@ fun main() {
                 hatedMonkey = line.split(" ").last().toInt()
             }
 
-            if (line.isBlank() || index == input.size-1) {
+            if (line.isBlank() || index == input.size - 1) {
                 monkeys.add(
                     Monkey(
                         number = monkeyNumber,
@@ -69,47 +72,39 @@ fun main() {
         return monkeys
     }
 
-    fun part1(input: List<String>): Long {
-        val monkeys = parseInput(input)
-        repeat(20) {
-            monkeys.forEach { monkey ->
+    fun List<Monkey>.game(
+        times: Int,
+        worryReducingOp: (Long) -> Long,
+    ) {
+        repeat(times) {
+            this.forEach { monkey ->
                 monkey.items.forEach { item ->
-                    item.worryLvl = monkey.operation(item.worryLvl) / 3
+                    item.worryLvl = worryReducingOp(monkey.operation(item.worryLvl))
                     if (item.worryLvl % monkey.testValue == 0L) {
-                        monkeys[monkey.favoredMonkey].items.add(item)
+                        this[monkey.favoredMonkey].items.add(item)
                     } else {
-                        monkeys[monkey.hatedMonkey].items.add(item)
+                        this[monkey.hatedMonkey].items.add(item)
                     }
                     monkey.inspectCount++
                 }
                 monkey.items.clear()
             }
         }
-        val sortedDescending = monkeys.map { it.inspectCount }.sortedDescending()
-        println(sortedDescending)
-        return sortedDescending[0] *sortedDescending[1]
+    }
+
+    fun part1(input: List<String>): Long {
+        val monkeys = parseInput(input)
+        monkeys.game(20) { it / 3 }
+        return monkeys.map { it.inspectCount }.sortedDescending()
+            .take(2).reduce(Long::times)
     }
 
     fun part2(input: List<String>): Long {
         val monkeys = parseInput(input)
-        val fakeLkkt = monkeys.map { it.testValue }.reduce { acc, i -> acc * i }.toLong()
-        repeat(10000) {
-            monkeys.forEach { monkey ->
-                monkey.items.forEach { item ->
-                    item.worryLvl = monkey.operation(item.worryLvl) % fakeLkkt
-                    if (item.worryLvl % monkey.testValue == 0L) {
-                        monkeys[monkey.favoredMonkey].items.add(item)
-                    } else {
-                        monkeys[monkey.hatedMonkey].items.add(item)
-                    }
-                    monkey.inspectCount++
-                }
-                monkey.items.clear()
-            }
-        }
-        val sortedDescending = monkeys.map { it.inspectCount }.sortedDescending()
-        println(sortedDescending)
-        return sortedDescending[0] *sortedDescending[1]
+        val fakeLkkt = monkeys.map { it.testValue }.reduce { acc, i -> acc * i }
+        monkeys.game(10000) { it % fakeLkkt }
+        return monkeys.map { it.inspectCount }.sortedDescending()
+            .take(2).reduce(Long::times)
     }
 
     // test if implementation meets criteria from the description, like:
