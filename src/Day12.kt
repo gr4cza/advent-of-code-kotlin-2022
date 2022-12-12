@@ -59,58 +59,36 @@ fun main() {
 
 private fun List<List<Char>>.findRoute(startPos: Position, endPos: Position): Int {
     val heatMap = List(this.size) { MutableList(this.first().size) { 0 } }
-    var heads = mutableListOf(startPos)
+    var heads = ArrayDeque(listOf(startPos))
     heatMap[startPos] = 1
 
-    while (true) {
-        val newHeads = mutableListOf<Position>()
-        heads.forEach { pos ->
+    while (heads.isNotEmpty()) {
+        heads.removeFirst().let { pos ->
             checkWhereToStep(pos, this, heatMap).forEach { direction ->
-                val currentStepCount = heatMap[pos]
-                val newPos: Position =
-                    when (direction) {
-                        Direction.U -> Position(x = pos.x, y = pos.y - 1)
-                        Direction.D -> Position(x = pos.x, y = pos.y + 1)
-                        Direction.L -> Position(x = pos.x - 1, y = pos.y)
-                        Direction.R -> Position(x = pos.x + 1, y = pos.y)
-                    }
+                val newPos = pos.newPosition(direction)
                 if (newPos == endPos) {
                     return heatMap[pos]
                 }
-                newHeads.add(newPos)
-                heatMap[newPos] = currentStepCount + 1
+                heads.add(newPos)
+                heatMap[newPos] = heatMap[pos] + 1
             }
         }
-
-        if (newHeads.isEmpty()) {
-            return Int.MAX_VALUE
-        }
-        heads = newHeads
     }
+    return Int.MAX_VALUE
 }
 
-fun checkWhereToStep(pos: Position, map: List<List<Char>>, heatMap: List<List<Int>>): List<Direction> {
-    val possibleDirs = mutableListOf<Direction>()
-    if (pos.y != 0 && (checkStep(map[pos], map[pos.y - 1][pos.x])) && heatMap[pos.y - 1][pos.x] == 0) {
-        possibleDirs.add(Direction.U)
-    }
-    if (pos.y != map.size - 1 && (checkStep(map[pos], map[pos.y + 1][pos.x])) && heatMap[pos.y + 1][pos.x] == 0) {
-        possibleDirs.add(Direction.D)
-    }
-    if (pos.x != 0 && (checkStep(map[pos], map[pos.y][pos.x - 1])) && heatMap[pos.y][pos.x - 1] == 0) {
-        possibleDirs.add(Direction.L)
-    }
-    if (pos.x != map.first().size - 1 &&
-        (checkStep(map[pos], map[pos.y][pos.x + 1])) && heatMap[pos.y][pos.x + 1] == 0
-    ) {
-        possibleDirs.add(Direction.R)
-    }
-    return possibleDirs
-}
+fun checkWhereToStep(pos: Position, map: List<List<Char>>, heatMap: List<List<Int>>): List<Direction> =
+    Direction.values().filter { dir ->
+        val newPos = pos.newPosition(dir)
+        when (dir) {
+            Direction.U -> pos.y != 0
+            Direction.D -> pos.y != map.size - 1
+            Direction.L -> pos.x != 0
+            Direction.R -> pos.x != map.first().size - 1
+        } && (checkStep(map[pos], map[newPos])) && heatMap[newPos] == 0
+    }.toList()
 
-private fun checkStep(start: Char, end: Char): Boolean {
-    return start >= end || start + 1 == end
-}
+private fun checkStep(start: Char, end: Char): Boolean = start >= (end - 1)
 
 private operator fun <E> List<List<E>>.get(pos: Position): E {
     return this[pos.y][pos.x]
