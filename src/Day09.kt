@@ -93,12 +93,3 @@ data class Move(
     val direction: Direction,
     val distance: Int
 )
-
-enum class Direction {
-    U, D, L, R,
-}
-
-data class Position(
-    var x: Int,
-    var y: Int,
-)
