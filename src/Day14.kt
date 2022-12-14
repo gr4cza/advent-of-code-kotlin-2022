@@ -28,15 +28,17 @@ fun main() {
         )
     }
 
+    fun getRange(start: Int, end: Int) = minOf(start, end)..maxOf(start, end)
+
     fun addLines(grid: OffsetGrid, rockLines: List<RockLine>) {
         rockLines.forEach { rockLine ->
             rockLine.linePoints.windowed(2).forEach { (start, end) ->
                 if (start.x == end.x) {
-                    for (i in minOf(start.y, end.y)..maxOf(start.y, end.y)) {
+                    for (i in getRange(start.y, end.y)) {
                         grid[Position(start.x, i)] = 1
                     }
                 } else if (start.y == end.y) {
-                    for (i in minOf(start.x, end.x)..maxOf(start.x, end.x)) {
+                    for (i in getRange(start.x, end.x)) {
                         grid[Position(i, start.y)] = 1
                     }
                 }
@@ -84,11 +86,12 @@ fun main() {
         val rockLines = parseLines(input)
         val edges = findEdges(rockLines)
         val newRockLines = rockLines.toMutableList()
+        val newEndPosY = edges.endPos.y + 2
         newRockLines.add(
             RockLine(
                 listOf(
-                    Position(0, edges.endPos.y + 2),
-                    Position(1000, edges.endPos.y + 2),
+                    Position(sandStartPos.x - newEndPosY, newEndPosY),
+                    Position(sandStartPos.x + newEndPosY, newEndPosY),
                 )
             )
         )
@@ -117,12 +120,21 @@ class OffsetGrid(
     private val grid: List<MutableList<Int>>
 
     init {
-        grid = List(edges.endPos.y - edges.startPos.y + 1) { MutableList(edges.endPos.x - edges.startPos.x + 1) { 0 } }
+        grid = List(edges.endPos.y - edges.startPos.y + 1) {
+            MutableList(edges.endPos.x - edges.startPos.x + 1) { 0 }
+        }
     }
 
     override fun toString(): String {
         return grid.joinToString("\n") { line ->
-            line.joinToString(",", prefix = "[", postfix = "]")
+            line.map {
+                when (it) {
+                    0 -> "."
+                    1 -> "#"
+                    2 -> "o"
+                    else -> " "
+                }
+            }.joinToString(",", prefix = "[", postfix = "]")
         }
     }
 
