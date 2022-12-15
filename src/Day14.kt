@@ -150,8 +150,3 @@ class OffsetGrid(
 data class RockLine(
     val linePoints: List<Position>
 )
-
-data class Edges(
-    val startPos: Position,
-    val endPos: Position,
-)

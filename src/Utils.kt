@@ -34,3 +34,8 @@ data class Position(
 enum class Direction {
     U, D, L, R,
 }
+
+data class Edges(
+    val startPos: Position,
+    val endPos: Position,
+)
