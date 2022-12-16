@@ -39,3 +39,12 @@ data class Edges(
     val startPos: Position,
     val endPos: Position,
 )
+
+operator fun <E> List<E>.component6(): String {
+    return this[5].toString()
+}
+
+fun <S, T> List<S>.cartesianProduct(other : List<T>) : List<Pair<S, T>> =
+    this.flatMap { s ->
+        List(other.size) { s }.zip(other)
+    }
