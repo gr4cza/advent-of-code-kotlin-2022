@@ -39,3 +39,7 @@ data class Edges(
     val startPos: Position,
     val endPos: Position,
 )
+
+operator fun <E> List<E>.component6(): String {
+    return this[5].toString()
+}

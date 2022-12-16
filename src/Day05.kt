@@ -90,7 +90,3 @@ data class Instruction(
     val from: Int,
     val to: Int,
 )
-
-private operator fun <E> List<E>.component6(): String {
-    return this[5].toString()
-}
