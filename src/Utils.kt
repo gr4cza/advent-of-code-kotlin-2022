@@ -1,6 +1,5 @@
 import java.io.File
 import java.math.BigInteger
-import java.nio.file.attribute.PosixFileAttributeView
 import java.security.MessageDigest
 
 /**
@@ -48,3 +47,6 @@ fun <S, T> List<S>.cartesianProduct(other : List<T>) : List<Pair<S, T>> =
     this.flatMap { s ->
         List(other.size) { s }.zip(other)
     }
+
+fun Int.toBitString(padding: Int): String =
+    Integer.toBinaryString(this).padStart(padding, '0')

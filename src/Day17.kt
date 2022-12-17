@@ -1,4 +1,7 @@
-private const val CHAMBER_WIDTH = 7
+@file:Suppress("MagicNumber")
+import kotlin.experimental.and
+import kotlin.experimental.or
+
 
 fun main() {
     fun parse(input: List<String>): List<Direction> = input.first().chunked(1).map {
@@ -29,8 +32,8 @@ fun main() {
     val testInput = readInput("Day17_test")
     val input = readInput("Day17")
 
-    check((part1(testInput, 2022)).also { println(it) } == 3068L)
-    check((part1(input, 2022)).also { println(it) } == 3157L)
+//    check((part1(testInput, 2022)).also { println(it) } == 3068L)
+//    check((part1(input, 2022)).also { println(it) } == 3157L)
     check(part2(testInput, 1_000_000_000_000L).also { println(it) } == 1514285714288)
     println(part2(input, 1_000_000_000_000L))
 }
@@ -40,13 +43,13 @@ class Chamber {
     private val padding = 50
     private var absoluteHeight = 0L
     private val lastAddedPositions = ArrayDeque<Position>()
-    private var grid: List<MutableList<Boolean>> =
-        List(windowHeight) { MutableList(CHAMBER_WIDTH) { false } }
+    private var grid: MutableList<Byte> =
+        MutableList(windowHeight) { 0b0000000 }
 
 
     fun getAbsoluteRockHeight(): Long {
         grid.forEachIndexed { index, rocks ->
-            if (rocks.any { it }) {
+            if (rocks > 0b0000000) {
                 return absoluteHeight + windowHeight - index
             }
         }
@@ -55,7 +58,7 @@ class Chamber {
 
     private fun rockHeight(): Int {
         grid.forEachIndexed { index, rocks ->
-            if (rocks.any { it }) {
+            if (rocks > 0b0000000) {
                 return windowHeight - index
             }
         }
@@ -86,8 +89,8 @@ class Chamber {
     }
 
     private fun tryToMoveWindow() {
-        if (lastAddedPositions.all { it.y <= windowHeight-padding }) {
-            grid = List(padding) { MutableList(CHAMBER_WIDTH) { false } } + grid.take(windowHeight-padding)
+        if (lastAddedPositions.all { it.y <= windowHeight - padding }) {
+            grid = (MutableList(padding) { 0.toByte() } + grid.take(windowHeight - padding)).toMutableList()
             absoluteHeight += padding
             lastAddedPositions.forEach { it.y += padding }
         }
@@ -113,91 +116,97 @@ class Chamber {
 
     private fun checkMove(rock: Rock): Boolean {
         val pos = rock.currentPos
-        rock.shape.shape.forEachIndexed { y, row ->
-            row.forEachIndexed { x, element ->
+        rock.shape.forEachIndexed { y, row ->
+            val checkedY = pos.y + y
+            if (checkedY !in 0 until windowHeight) return false
+            if (row and grid[checkedY] > 0) return false
 
-                if (element) {
-                    val checkedY = pos.y + y
-                    val checkedX = pos.x + x
-                    if (checkedY !in 0 until windowHeight) return false
-                    if (checkedX !in 0 until 7) return false
-                    if (grid[checkedY][checkedX] ) return false
-                }
-            }
         }
         return true
     }
 
     private fun addRock(rock: Rock) {
         val pos = rock.currentPos
-        rock.shape.shape.forEachIndexed { y, row ->
-            row.forEachIndexed { x, element ->
-                if (element ) {
-                    val checkedY = pos.y + y
-                    val checkedX = pos.x + x
-                    grid[checkedY][checkedX] = true
-                }
-            }
+        rock.shape.forEachIndexed { y, row ->
+            val checkedY = pos.y + y
+            grid[checkedY] = row or grid[checkedY]
         }
     }
 
     override fun toString(): String {
         return grid.joinToString("\n") { line ->
-            line.joinToString(",", prefix = "[", postfix = "]") {
+            line.toInt().toBitString(7).chunked(1).map { it.toInt() }.joinToString(",", prefix = "[", postfix = "]") {
                 when (it) {
-                    false -> "."
-                    true -> "@"
+                    0 -> "."
+                    1 -> "@"
+                    else -> error("wrong input")
                 }
             }
         }
     }
 }
 
-data class Rock(
+class Rock(
     var currentPos: Position,
-    val shape: RockShape,
+    val rockShape: RockShape,
 ) {
+    val shape: MutableList<Byte> = rockShape.shape.toMutableList()
     fun move(direction: Direction) {
-        if (direction == Direction.U) {
-            error("Invalid direction")
+        when (direction) {
+            Direction.U -> {
+                error("Invalid direction")
+            }
+            Direction.D -> currentPos.newPosition(direction)
+            Direction.L -> {
+
+            }
+            Direction.R -> {
+
+            }
         }
         currentPos = currentPos.newPosition(direction)
     }
 }
 
-enum class RockShape(val shape: List<List<Boolean>>) {
+enum class RockShape(
+    val shape: List<Byte>,
+    val possibleRange: IntRange
+) {
     A(
-        listOf(
-            listOf(true, true, true, true)
-        )
+        listOf(0b0011110),
+        0..3
     ),
     B(
         listOf(
-            listOf(false, true, false),
-            listOf(true, true, true),
-            listOf(false, true, false),
-        )
+            0b0001000,
+            0b0011100,
+            0b0001000,
+        ),
+        0..4
     ),
     C(
         listOf(
-            listOf(false, false, true),
-            listOf(false, false, true),
-            listOf(true, true, true),
-        )
+            0b0000100,
+            0b0000100,
+            0b0011100,
+        ),
+        0..4
     ),
     D(
         listOf(
-            listOf(true),
-            listOf(true),
-            listOf(true),
-            listOf(true),
-        )
+            0b0010000,
+            0b0010000,
+            0b0010000,
+            0b0010000,
+        ),
+        0..6
     ),
     E(
         listOf(
-            listOf(true, true),
-            listOf(true, true),
-        )
+            0b0011000,
+            0b0011000,
+        ),
+        0..6
     ),
     ;
 
@@ -207,10 +216,11 @@ enum class RockShape(val shape: List<List<Boolean>>) {
 
     override fun toString(): String {
         return shape.joinToString("\n") { line ->
-            line.joinToString(",", prefix = "[", postfix = "]") {
+            line.toInt().toBitString(7).chunked(1).map { it.toInt() }.joinToString(",", prefix = "[", postfix = "]") {
                 when (it) {
-                    false -> "."
-                    true -> "#"
+                    0 -> "."
+                    1 -> "@"
+                    else -> error("wrong input")
                 }
             }
         }
