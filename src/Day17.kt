@@ -35,15 +35,14 @@ fun main() {
     println(part2(input, 1_000_000_000_000L))
 }
 
-class Chamber() {
-    private val windowHeight = 5000
+class Chamber {
+    private val windowHeight = 200
+    private val padding = 50
     private var absoluteHeight = 0L
-    private val grid: MutableList<MutableList<Int>> =
-        MutableList(windowHeight) { MutableList(CHAMBER_WIDTH) { 0 } }
+    private val lastAddedPositions = ArrayDeque<Position>()
+    private var grid: List<MutableList<Int>> =
+        List(windowHeight) { MutableList(CHAMBER_WIDTH) { 0 } }
 
-    private fun geAbsoluteHeight(): Long {
-        return absoluteHeight
-    }
 
     fun getAbsoluteRockHeight(): Long {
         grid.forEachIndexed { index, rocks ->
@@ -67,7 +66,7 @@ class Chamber() {
         var dirCount = 0
         var rockCount = 0
 
-        (0 until iteration).forEach { _ ->
+        (0 until iteration).forEach { i ->
             val rockShape = rockShapes[rockCount++ % rockShapes.size]
             val rock = Rock(Position(2, windowHeight - this.rockHeight() - rockShape.height() - 3), rockShape)
 
@@ -78,8 +77,26 @@ class Chamber() {
                 moving = tryToMove(rock, Direction.D)
                 if (!moving) {
                     addRock(rock)
+                    savePosition(rock)
                 }
             }
+            tryToMoveWindow()
+            if (i % 1_000_000 == 0L) println(i)
+        }
+    }
+
+    private fun tryToMoveWindow() {
+        if (lastAddedPositions.all { it.y <= windowHeight-padding }) {
+            grid = List(padding) { MutableList(CHAMBER_WIDTH) { 0 } } + grid.take(windowHeight-padding)
+            absoluteHeight += padding
+            lastAddedPositions.forEach { it.y += padding }
+        }
+    }
+
+    private fun savePosition(rock: Rock) {
+        lastAddedPositions.addFirst(rock.currentPos)
+        while (lastAddedPositions.size > padding) {
+            lastAddedPositions.removeLast()
         }
     }
 
