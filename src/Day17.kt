@@ -40,13 +40,13 @@ class Chamber {
     private val padding = 50
     private var absoluteHeight = 0L
     private val lastAddedPositions = ArrayDeque<Position>()
-    private var grid: List<MutableList<Int>> =
-        List(windowHeight) { MutableList(CHAMBER_WIDTH) { 0 } }
+    private var grid: List<MutableList<Boolean>> =
+        List(windowHeight) { MutableList(CHAMBER_WIDTH) { false } }
 
 
     fun getAbsoluteRockHeight(): Long {
         grid.forEachIndexed { index, rocks ->
-            if (rocks.any { it > 0 }) {
+            if (rocks.any { it }) {
                 return absoluteHeight + windowHeight - index
             }
         }
@@ -55,7 +55,7 @@ class Chamber {
 
     private fun rockHeight(): Int {
         grid.forEachIndexed { index, rocks ->
-            if (rocks.any { it > 0 }) {
+            if (rocks.any { it }) {
                 return windowHeight - index
             }
         }
@@ -87,7 +87,7 @@ class Chamber {
 
     private fun tryToMoveWindow() {
         if (lastAddedPositions.all { it.y <= windowHeight-padding }) {
-            grid = List(padding) { MutableList(CHAMBER_WIDTH) { 0 } } + grid.take(windowHeight-padding)
+            grid = List(padding) { MutableList(CHAMBER_WIDTH) { false } } + grid.take(windowHeight-padding)
             absoluteHeight += padding
             lastAddedPositions.forEach { it.y += padding }
         }
@@ -116,12 +116,12 @@ class Chamber {
         rock.shape.shape.forEachIndexed { y, row ->
             row.forEachIndexed { x, element ->
 
-                if (element > 0) {
+                if (element) {
                     val checkedY = pos.y + y
                     val checkedX = pos.x + x
                     if (checkedY !in 0 until windowHeight) return false
                     if (checkedX !in 0 until 7) return false
-                    if (grid[checkedY][checkedX] > 0) return false
+                    if (grid[checkedY][checkedX] ) return false
                 }
             }
         }
@@ -132,10 +132,10 @@ class Chamber {
         val pos = rock.currentPos
         rock.shape.shape.forEachIndexed { y, row ->
             row.forEachIndexed { x, element ->
-                if (element > 0) {
+                if (element ) {
                     val checkedY = pos.y + y
                     val checkedX = pos.x + x
-                    grid[checkedY][checkedX] = 2
+                    grid[checkedY][checkedX] = true
                 }
             }
         }
@@ -145,10 +145,8 @@ class Chamber {
         return grid.joinToString("\n") { line ->
             line.joinToString(",", prefix = "[", postfix = "]") {
                 when (it) {
-                    0 -> "."
-                    1 -> "#"
-                    2 -> "@"
-                    else -> " "
+                    false -> "."
+                    true -> "@"
                 }
             }
         }
@@ -167,38 +165,38 @@ data class Rock(
     }
 }
 
-enum class RockShape(val shape: List<List<Int>>) {
+enum class RockShape(val shape: List<List<Boolean>>) {
     A(
         listOf(
-            listOf(1, 1, 1, 1)
+            listOf(true, true, true, true)
         )
     ),
     B(
         listOf(
-            listOf(0, 1, 0),
-            listOf(1, 1, 1),
-            listOf(0, 1, 0),
+            listOf(false, true, false),
+            listOf(true, true, true),
+            listOf(false, true, false),
         )
     ),
     C(
         listOf(
-            listOf(0, 0, 1),
-            listOf(0, 0, 1),
-            listOf(1, 1, 1),
+            listOf(false, false, true),
+            listOf(false, false, true),
+            listOf(true, true, true),
         )
     ),
     D(
         listOf(
-            listOf(1),
-            listOf(1),
-            listOf(1),
-            listOf(1),
+            listOf(true),
+            listOf(true),
+            listOf(true),
+            listOf(true),
         )
     ),
     E(
         listOf(
-            listOf(1, 1),
-            listOf(1, 1),
+            listOf(true, true),
+            listOf(true, true),
         )
     ),
     ;
@@ -211,10 +209,8 @@ enum class RockShape(val shape: List<List<Int>>) {
         return shape.joinToString("\n") { line ->
             line.joinToString(",", prefix = "[", postfix = "]") {
                 when (it) {
-                    0 -> "."
-                    1 -> "#"
-                    2 -> "@"
-                    else -> " "
+                    false -> "."
+                    true -> "#"
                 }
             }
         }
