@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 private const val CHAMBER_WIDTH = 7
 
 fun main() {
@@ -78,9 +80,9 @@ class Chamber {
             if (!foundRepetition && states.contains(state)) {
                 val (index, height) = states.getValue(state)
                 val reputationLength = i - index
-                val remeainingReps = (iteration - i) / reputationLength
-                calculatedHeight = remeainingReps * (getAbsoluteRockHeight()-height)
-                i += reputationLength*remeainingReps
+                val remainingReps = (iteration - i) / reputationLength
+                calculatedHeight = remainingReps * (getAbsoluteRockHeight() - height)
+                i += reputationLength * remainingReps
                 foundRepetition = true
             } else {
                 states[state] = i to getAbsoluteRockHeight()
@@ -134,12 +136,12 @@ class Chamber {
         val pos = rock.currentPos
         rock.shape.shape.forEachIndexed { y, row ->
             row.forEachIndexed { x, element ->
+                val checkedY = pos.y + y
+                val checkedX = pos.x + x
 
                 if (element) {
-                    val checkedY = pos.y + y
-                    val checkedX = pos.x + x
                     if (checkedY !in 0 until windowHeight) return false
-                    if (checkedX !in 0 until 7) return false
+                    if (checkedX !in 0 until CHAMBER_WIDTH) return false
                     if (grid[checkedY][checkedX]) return false
                 }
             }
