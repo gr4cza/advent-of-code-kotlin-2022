@@ -13,18 +13,15 @@ fun main() {
             val geodeCostObsidian = sentences[4].split(" ")[7].toInt()
             BluePrint(
                 id = id,
-                robots = listOf(
-                    Pair(Robot(GeodeType.ORE), listOf(Cost(GeodeType.ORE, oreCostOre))),
-                    Pair(Robot(GeodeType.CLAY), listOf(Cost(GeodeType.ORE, clayCostOre))),
-                    Pair(
-                        Robot(GeodeType.OBSIDIAN),
-                        listOf(Cost(GeodeType.ORE, obsidianCostOre), Cost(GeodeType.CLAY, obsidianCostClay))
-                    ),
-                    Pair(
-                        Robot(GeodeType.GEODE), listOf(
-                            Cost(GeodeType.ORE, geodeCostOre),
-                            Cost(GeodeType.OBSIDIAN, geodeCostObsidian)
-                        )
+                robots = mapOf(
+                    GeodeType.ORE to listOf(Cost(GeodeType.ORE, oreCostOre)),
+                    GeodeType.CLAY to listOf(Cost(GeodeType.ORE, clayCostOre)),
+                    GeodeType.OBSIDIAN to
+                        listOf(Cost(GeodeType.ORE, obsidianCostOre), Cost(GeodeType.CLAY, obsidianCostClay)),
+                    GeodeType.GEODE to listOf(
+                        Cost(GeodeType.ORE, geodeCostOre),
+                        Cost(GeodeType.OBSIDIAN, geodeCostObsidian)
+
                     )
                 ),
             )
@@ -35,7 +32,9 @@ fun main() {
         val minutes = 24
         val startingRobots = listOf(Robot(GeodeType.ORE))
 
-        val allQualityLevels = bluePrints.map { bluePrint ->
+        val allQualityLevels = bluePrints.mapIndexed { i, bluePrint ->
+            println("check: $i")
+            BluePrint.currentMax = 0
             val qualityLevel = bluePrint.calculateQualityLevel(startingRobots, minutes)
             qualityLevel * bluePrint.id
         }
@@ -44,65 +43,117 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        val bluePrints = parse(input)
+        val minutes = 32
+        val startingRobots = listOf(Robot(GeodeType.ORE))
+
+        val allQualityLevels = bluePrints.take(3).mapIndexed { i, bluePrint ->
+            println("check: $i")
+            BluePrint.currentMax = 0
+            val qualityLevel = bluePrint.calculateQualityLevel(startingRobots, minutes)
+            qualityLevel
+        }
+            .also { println(it) }.reduce(Int::times)
+        return allQualityLevels
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day19_test")
     val input = readInput("Day19")
 
-    check((part1(testInput)).also { println(it) } == 33)
-    println(part1(input))
-    check(part2(testInput).also { println(it) } == 1)
+//    check((part1(testInput)).also { println(it) } == 33)
+//    println(part1(input))
+//    check(part2(testInput).also { println(it) } == 1)
     println(part2(input))
 }
 
 data class BluePrint(
     val id: Int,
-    val robots: List<Pair<Robot, List<Cost>>>
+    val robots: Map<GeodeType, List<Cost>>
 ) {
+
+    private val maxTypes: Map<GeodeType, Int> = mapOf(
+        GeodeType.ORE to (robots.values.flatten().filter { it.type == GeodeType.ORE }.maxOfOrNull { it.cost } ?: 0),
+        GeodeType.CLAY to (robots.values.flatten().filter { it.type == GeodeType.CLAY }.maxOfOrNull { it.cost } ?: 0),
+        GeodeType.OBSIDIAN to (robots.values.flatten().filter { it.type == GeodeType.OBSIDIAN }.maxOfOrNull { it.cost }
+            ?: 0),
+    )
+
     fun calculateQualityLevel(
         currentRobots: List<Robot>,
         minutes: Int,
         collectedGeodes: Map<GeodeType, Int> = startingCollection()
     ): Int {
-        if (minutes <= 0) return collectedGeodes[GeodeType.GEODE] ?: 0
-
-        val geodes = robots.sortedByDescending { it.first.type }.mapNotNull {
-            val currentGeodes = collectedGeodes.toMutableMap()
-            val newRobots = tryToBuyRobot(currentGeodes, it)
-            if (newRobots.isNotEmpty()) {
-                produceGeodes(currentRobots, currentGeodes)
-                calculateQualityLevel(currentRobots + newRobots, minutes - 1, currentGeodes)
-            } else {
-                null
+        if (minutes <= 0 || !checkCanBeBetter(minutes, currentRobots, collectedGeodes)) {
+            val geodeCount = collectedGeodes[GeodeType.GEODE] ?: 0
+            if ((geodeCount > currentMax)) {
+                currentMax = geodeCount
+                println(currentMax)
             }
+            return geodeCount
         }
-        val currentGeodes = collectedGeodes.toMutableMap()
-        produceGeodes(currentRobots, currentGeodes)
-        val geodeWithoutBuy = calculateQualityLevel(currentRobots, minutes - 1, currentGeodes)
 
-        return (geodes + listOf(geodeWithoutBuy)).max()
+        val geodeCount = mutableListOf<Int>()
+        // buy robot
+        if (checkType(collectedGeodes, GeodeType.GEODE)) {
+            geodeCount.add(buyRobot(collectedGeodes, GeodeType.GEODE, currentRobots, minutes))
+        } else {
+            listOf(GeodeType.OBSIDIAN, GeodeType.CLAY, GeodeType.ORE).forEach { type ->
+                if (checkType(collectedGeodes, type) && !checkMax(type, currentRobots)) {
+                    geodeCount.add(buyRobot(collectedGeodes, type, currentRobots, minutes))
+                }
+            }
+            // produce
+            val currentGeodes = collectedGeodes.toMutableMap()
+            produceGeodes(currentRobots, currentGeodes)
+
+            geodeCount.add(calculateQualityLevel(currentRobots, minutes - 1, currentGeodes))
+        }
+
+        return geodeCount.max()
     }
 
-    private fun tryToBuyRobot(
-        currentGeodes: MutableMap<GeodeType, Int>,
-        robotCost: Pair<Robot, List<Cost>>
-    ): List<Robot> {
-        val costs = robotCost.second
-        val value = costs.minOfOrNull {
-            val currentCount = currentGeodes[it.type] ?: 0
-            currentCount / it.cost
-        } ?: 0
-        return if (value > 0) {
-            costs.forEach { cost ->
-                currentGeodes[cost.type]?.let { currentGeodes[cost.type] = it - (cost.cost * value) }
-            }
-            (0 until value).map {
-                robotCost.first
-            }
-        } else {
-            emptyList()
+    private fun checkCanBeBetter(
+        minutes: Int,
+        currentRobots: List<Robot>,
+        collectedGeodes: Map<GeodeType, Int>
+    ): Boolean {
+        val geodeRobotCount = currentRobots.count { it.type == GeodeType.GEODE }
+        val geodeCount = collectedGeodes[GeodeType.GEODE]!!
+        val generatedCount = (0 until minutes).map {
+            geodeRobotCount + it
+        }.sum()
+        return geodeCount + generatedCount > currentMax
+    }
+
+    private fun checkMax(type: GeodeType, currentRobots: List<Robot>): Boolean {
+        return currentRobots.count { it.type == type } >= maxTypes[type]!!
+    }
+
+    private fun checkType(collectedGeodes: Map<GeodeType, Int>, type: GeodeType) =
+        robots[type]!!.all {
+            it.cost <= collectedGeodes[it.type]!!
+        }
+
+    private fun buyRobot(
+        collectedGeodes: Map<GeodeType, Int>,
+        geode: GeodeType,
+        currentRobots: List<Robot>,
+        minutes: Int
+    ): Int {
+        val currentGeodes = collectedGeodes.toMutableMap()
+        buyRobot(geode, currentGeodes)
+        produceGeodes(currentRobots, currentGeodes)
+        return calculateQualityLevel(
+            currentRobots + listOf(Robot(geode)),
+            minutes - 1,
+            currentGeodes
+        )
+    }
+
+    private fun buyRobot(geode: GeodeType, collectedGeodes: MutableMap<GeodeType, Int>) {
+        robots[geode]!!.forEach {
+            collectedGeodes[it.type] = collectedGeodes[it.type]!! - it.cost
         }
     }
 
@@ -122,6 +173,10 @@ data class BluePrint(
             GeodeType.OBSIDIAN to 0,
             GeodeType.GEODE to 0,
         )
+
+    companion object {
+        var currentMax = 0
+    }
 }
 
 data class Robot(
