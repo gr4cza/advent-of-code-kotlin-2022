@@ -1,6 +1,16 @@
 @file:Suppress("MagicNumber")
 
 fun main() {
+    data class Monkey(
+        val number: Int,
+        val items: MutableList<Item>,
+        val operation: (Long) -> Long,
+        val testValue: Int,
+        val favoredMonkey: Int,
+        val hatedMonkey: Int,
+        var inspectCount: Long = 0L,
+    )
+
     fun readOperation(line: String): (Long) -> Long =
         line.removePrefix("Operation: new = ")
             .split(" ").let { (_, op, b) ->
@@ -117,17 +127,9 @@ fun main() {
     val input = readInput("Day11")
     println(part1(input))
     println(part2(input))
+
 }
 
-data class Monkey(
-    val number: Int,
-    val items: MutableList<Item>,
-    val operation: (Long) -> Long,
-    val testValue: Int,
-    val favoredMonkey: Int,
-    val hatedMonkey: Int,
-    var inspectCount: Long = 0L,
-)
 
 data class Item(
     var worryLvl: Long
