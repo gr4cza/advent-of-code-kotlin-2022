@@ -1,12 +1,24 @@
 import kotlin.math.abs
 
-private fun Cube.checkTouching(to: Cube): Boolean {
-    return (this.x == to.x && this.y == to.y && (abs(this.z - to.z) == 1)) ||
-        (this.x == to.x && this.z == to.z && (abs(this.y - to.y) == 1)) ||
-        (this.y == to.y && this.z == to.z && (abs(this.x - to.x) == 1))
-}
+
 
 fun main() {
+    data class Cube(
+        val x: Int,
+        val y: Int,
+        val z: Int,
+    ) {
+        fun getPosition(): List<Int> {
+            return listOf(x, y, z)
+        }
+    }
+
+    fun Cube.checkTouching(to: Cube): Boolean {
+        return (this.x == to.x && this.y == to.y && (abs(this.z - to.z) == 1)) ||
+            (this.x == to.x && this.z == to.z && (abs(this.y - to.y) == 1)) ||
+            (this.y == to.y && this.z == to.z && (abs(this.x - to.x) == 1))
+    }
+
     fun parse(input: List<String>): List<Cube> {
         return input.map {
             it.split(",").map { it.toInt() }.let { (x, y, z) ->
@@ -97,14 +109,4 @@ fun main() {
     check((part1(input)).also { println(it) } == 3374)
     check(part2(testInput).also { println(it) } == 58)
     check(part2(input).also { println(it) } == 2010)
-}
-
-data class Cube(
-    val x: Int,
-    val y: Int,
-    val z: Int,
-) {
-    fun getPosition(): List<Int> {
-        return listOf(x, y, z)
-    }
 }

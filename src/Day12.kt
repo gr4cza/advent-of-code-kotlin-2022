@@ -94,6 +94,6 @@ private operator fun <E> List<List<E>>.get(pos: Position): E {
     return this[pos.y][pos.x]
 }
 
-private operator fun <E> List<MutableList<E>>.set(pos: Position, element: E) {
+operator fun <E> List<MutableList<E>>.set(pos: Position, element: E) {
     this[pos.y][pos.x] = element
 }
