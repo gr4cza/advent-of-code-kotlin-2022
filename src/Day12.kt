@@ -90,7 +90,7 @@ fun checkWhereToStep(pos: Position, map: List<List<Char>>, heatMap: List<List<In
 
 private fun checkStep(start: Char, end: Char): Boolean = start >= (end - 1)
 
-private operator fun <E> List<List<E>>.get(pos: Position): E {
+operator fun <E> List<List<E>>.get(pos: Position): E {
     return this[pos.y][pos.x]
 }
 
