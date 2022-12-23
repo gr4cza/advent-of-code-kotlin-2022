@@ -48,3 +48,11 @@ fun <S, T> List<S>.cartesianProduct(other : List<T>) : List<Pair<S, T>> =
     this.flatMap { s ->
         List(other.size) { s }.zip(other)
     }
+
+operator fun <E> List<List<E>>.get(pos: Position): E {
+    return this[pos.y][pos.x]
+}
+
+operator fun <E> List<MutableList<E>>.set(pos: Position, element: E) {
+    this[pos.y][pos.x] = element
+}
