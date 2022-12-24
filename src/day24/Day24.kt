@@ -6,10 +6,10 @@ import readInput
 
 fun main() {
 
-    fun simulate(valley: Valley): Int {
+    fun simulate(valley: Valley, startPosition: Position, endPos: Position): Int {
         var i = 0
-        var possiblePositions = setOf(valley.startingPos)
-        while (!possiblePositions.contains(valley.endingPos)) {
+        var possiblePositions = setOf(startPosition)
+        while (!possiblePositions.contains(endPos)) {
             valley.step()
             possiblePositions = possiblePositions.map { pos ->
                 valley.possiblePositions(pos)
@@ -21,20 +21,24 @@ fun main() {
 
     fun part1(input: List<String>): Int {
         val valley = Valley(input)
-        return simulate(valley)
+        return simulate(valley, valley.startingPos, valley.endingPos)
     }
 
     fun part2(input: List<String>): Int {
-        return input.size
+        val valley = Valley(input)
+        val firstRound = simulate(valley, valley.startingPos, valley.endingPos)
+        val secondRound = simulate(valley, valley.endingPos, valley.startingPos)
+        val thirdRoundRound = simulate(valley, valley.startingPos, valley.endingPos)
+        return firstRound + secondRound + thirdRoundRound
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("day24/Day24_test")
     val input = readInput("day24/Day24")
 
-    check((part1(testInput)).also { println(it) } == 18)
-    println(part1(input))
-    check(part2(testInput).also { println(it) } == 1)
+//    check((part1(testInput)).also { println(it) } == 18)
+//    println(part1(input))
+    check(part2(testInput).also { println(it) } == 54)
     println(part2(input))
 }
 
