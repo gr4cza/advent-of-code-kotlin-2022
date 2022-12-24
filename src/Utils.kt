@@ -32,7 +32,10 @@ data class Position(
 }
 
 enum class Direction {
-    U, D, L, R,
+    U, D, L, R,;
+
+    companion object
+
 }
 
 data class Edges(
